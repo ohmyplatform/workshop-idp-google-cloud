@@ -30,6 +30,15 @@
   ??? example "Example - Create GitHub Organization"
       ![create_github_org](./img/create_github_org.png)
 
+2. Enable Public packages in GitHub organization.
+
+    ```bash
+    echo https://github.com/organizations/$GOOGLE_CLOUD_PROJECT/settings/packages
+    ```
+
+  ??? example "Example - Enable Public Packages"
+      ![packages_permissions_public](./img/packages_permissions_public.png)
+
 2. Login to GitHub.
 
     ```bash
@@ -39,26 +48,20 @@
   ??? example "Example - GitHub Login"
       ![gh_auth_login](./img/gh_auth_login.png)
 
-3. Replace <your_gh_org> with your GitHub organization name and set environment variables:
-
-    ```bash
-    export GH_ORG=$GOOGLE_CLOUD_PROJECT
-    ```
-
-4. Configure git to use your GitHub username and email.
+3. Configure git to use your GitHub username and email.
 
     ```bash
     git config --global user.email "ada@example.com"
     git config --global user.name "Ada Lovelace"
     ```
 
-5. Create team named `platform` GitHub.
+4. Create team named `platform` GitHub.
 
     ```bash
     gh api -X POST /orgs/$GOOGLE_CLOUD_PROJECT/teams -f name="platform" -f description="Platform team" -f privacy="closed"
     ```
 
-6. Create and clone main repositories.
+5. Create and clone main repositories.
 
     ```bash
     mkdir ~/repos
@@ -67,14 +70,14 @@
     gh repo create $GOOGLE_CLOUD_PROJECT/argocd-apps --template="ohmyplatform/argocd-apps-template" --private --clone
     ```
 
-7. Replace values for GitHub Organization and Google Project Identifier
+6. Replace values for GitHub Organization and Google Project Identifier
 
     ```bash
     find ./ -type f -exec sed -i "s/\${{\__GITHUB_ORG__\}}/$GOOGLE_CLOUD_PROJECT/g" {} +
     find ./ -type f -exec sed -i "s/\${{\__GOOGLE_PROJECT_ID__\}}/$GOOGLE_CLOUD_PROJECT/g" {} +
     ```
 
-8. Push changes to GitHub.
+7. Push changes to GitHub.
 
     ```bash
     git -C ~/repos/infra-as-code-gc/ add .
@@ -85,7 +88,7 @@
     git -C ~/repos/argocd-apps/ push
     ```
 
-9. Click over button `Open Editor` and open folder `repos`.
+8. Click over button `Open Editor` and open folder `repos`.
 
 ## Task 1. Create GKE infrastructure
 
@@ -104,10 +107,16 @@
     terraform -chdir=./gke apply gke.plan
     ```
 
-4. Connect to GKE cluster created in previous step:
+3. Connect to GKE cluster created in previous step:
 
     ```bash
     gcloud container clusters get-credentials idp --region europe-west1 --project $GOOGLE_CLOUD_PROJECT
+    ```
+
+4. Check if you can connect to the cluster:
+
+    ```bash
+    kubectl get nodes
     ```
 
 5. Get Load-Balancer IP.
@@ -123,7 +132,13 @@
 
 ## Task 2. Deploy ArgoCD
 
-1. ArgoCD allows you to use local users or SSO (Single Sign-On). In this workshop we will use GitHub as the OIDC provider. To do so, we need to register an OAuth application in GitHub. You can go to `https://github.com/organizations/<your_org_name>/settings/applications/new` to configure it.
+### Step 1. Register an OAuth application for ArgoCD
+
+1. ArgoCD allows you to use local users or SSO (Single Sign-On). In this workshop we will use GitHub as the OIDC provider. To do so, we need to register an OAuth application in GitHub. You can copy the result link to configure it:
+
+    ```bash
+    echo https://github.com/organizations/$GOOGLE_CLOUD_PROJECT/settings/applications/new
+    ```
 
 2. Use the following values:
    - Application name:
@@ -135,13 +150,13 @@
    - Homepage URL:
 
       ```bash
-      https://argocd.<your_org_name>.ohmyplatform.com
+      echo https://argocd.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com
       ```
 
    - Authorization callback URL:
 
       ```bash
-      https://argocd.<your_org_name>.ohmyplatform.com/api/dex/callback
+      echo https://argocd.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com/api/dex/callback
       ```
 
 3. Generate Client secret.
@@ -150,20 +165,22 @@
 
       ![argocd_oauth_app](./img/argocd_oauth_app.png)
 
-4. Create `terraform_secrets.tfvars` file in `infra-as-code-gc/argocd`.
+### Step 2. Create ArgoCD Infrastructure
+
+1. Create `terraform_secrets.tfvars` file in `infra-as-code-gc/argocd`.
 
     ```bash
     touch ~/repos/infra-as-code-gc/argocd/terraform_secrets.tfvars
     ```
 
-5. Copy Client ID and Client secret and put it in the previously created `terraform_secrets.tfvars` file with these values:
+2. Copy Client ID and Client secret and put it in the previously created `terraform_secrets.tfvars` file with these values:
 
     ```bash
     argocd_sso_client_id = "<argocd_github_client_id>"
     argocd_sso_client_secret = "<argocd_github_client_secret>"
     ```
 
-6. Apply terraform from `argocd` directory
+3. Apply terraform from `argocd` directory
 
     ```bash
     cd ~/repos/infra-as-code-gc
@@ -172,17 +189,22 @@
     terraform -chdir=./argocd apply argocd.plan
     ```
 
-7. Go to ArgoCD login URL, that will be `https://<your_org_name>.argocd.ohmyplatform.com` where a login screen like the following should be displayed.
+4. Go to ArgoCD login URL, that will be `https://argocd.<your_org_name>.ohmyplatform.com` where a login screen like the following should be displayed.
 
     ![argocd_login_screen](./img/argocd_login_screen.png)
 
-8. Click in buttom **LOG IN VIA GITHUB** to access ArgoCD using GitHub team `platform` created previously
+5. Click in buttom **LOG IN VIA GITHUB** to access ArgoCD using GitHub team `platform` created previously
 
 ## Task 3. Deploy Backstage
 
 ### Step 1. Register an OAuth application for Backstage
 
-1. In the same way than ArgoCD, we need to register an OAuth application in GitHub for Backstage. You can go to `https://github.com/organizations/<your_org_name>/settings/applications/new` to configure it.
+1. In the same way than ArgoCD, we need to register an OAuth application in GitHub for Backstage. You can copy the result link to configure it:
+
+    ```bash
+    echo https://github.com/organizations/$GOOGLE_CLOUD_PROJECT/settings/applications/new
+    ```
+
 2. It will be used the following values for the configuration:
 
    - Application name:
@@ -194,13 +216,13 @@
    - Homepage URL:
 
       ```bash
-      https://backstage.<your_org_name>.ohmyplatform.com
+      echo https://backstage.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com
       ```
 
    - Authorization callback URL:
 
       ```bash
-      https://backstage.<your_org_name>.ohmyplatform.com/api/auth/github/handler/frame
+      echo https://backstage.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com/api/auth/github/handler/frame
       ```
 
 3. Generate Client secret.
@@ -208,19 +230,24 @@
 
 ### Step 2. Create Backstage GitHub App
 
-1. Go to `https://github.com/organizations/<your_org_name>/settings/apps/new`.
+1. Follow the result link to start configuring it:
+
+    ```bash
+    echo https://github.com/organizations/$GOOGLE_CLOUD_PROJECT/settings/apps/new
+    ```
+
 2. Use the following values and click on `Create GitHub App`:
 
    - GitHub App name:
 
       ```bash
-      Backstage-<your_org_name>
+      echo Backstage-$GOOGLE_CLOUD_PROJECT | cut -c1-34
       ```
 
    - Homepage URL:
 
       ```bash
-      https://backstage.<your_org_name>.ohmyplatform.com
+      echo https://backstage.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com
       ```
     
    - Click on `Active` checkbox in `Webhook` section to disable it.
@@ -249,13 +276,39 @@
 
 ### Step 3. Deploy Backstage with terraform
 
-1. Create `terraform_secrets.tfvars` file in `infra-as-code-gc/backstage` folder:
+1. Create and clone Backstage and software-templates repositories.
+
+    ```bash
+    cd ~/repos
+    gh repo create $GOOGLE_CLOUD_PROJECT/backstage --template="ohmyplatform/backstage-template" --public --clone
+    gh repo create $GOOGLE_CLOUD_PROJECT/software-templates --template="ohmyplatform/software-templates-template" --public --clone
+    ```
+
+2. Replace values for GitHub Organization and Google Project Identifier
+
+    ```bash
+    find ~/repos/ -type f -exec sed -i "s/\${{\__GITHUB_ORG__\}}/$GOOGLE_CLOUD_PROJECT/g" {} +
+    find ~/repos/ -type f -exec sed -i "s/\${{\__GOOGLE_PROJECT_ID__\}}/$GOOGLE_CLOUD_PROJECT/g" {} +
+    ```
+
+3. Push changes to GitHub.
+
+    ```bash
+    git -C ~/repos/backstage/ add .
+    git -C ~/repos/backstage/ commit -m "chore: replace values"
+    git -C ~/repos/backstage/ push
+    git -C ~/repos/software-templates/ add .
+    git -C ~/repos/software-templates/ commit -m "chore: replace values"
+    git -C ~/repos/software-templates/ push
+    ```
+
+4. Create `terraform_secrets.tfvars` file in `infra-as-code-gc/backstage` folder:
 
     ```bash
     touch ~/repos/infra-as-code-gc/backstage/terraform_secrets.tfvars
     ```
 
-1. Use the values obtained in the previous steps and put it in the previously created `terraform_secrets.tfvars` file with these values:
+5. Use the values obtained in the previous steps and put it in the previously created `terraform_secrets.tfvars` file with these values:
 
     ```bash
     backstage_auth_github_client_id = ""
@@ -267,9 +320,10 @@
 
     EOF
 
+    # The empty line after EOF is required
     ```
 
-2. Apply terraform code from `backstage` folder
+6. Apply terraform code from `backstage` folder
 
     ```bash
     cd ~/repos/infra-as-code-gc
@@ -278,33 +332,7 @@
     terraform -chdir=./backstage apply backstage.plan
     ```
 
-3. Create and clone Backstage and software-templates repositories.
-
-    ```bash
-    cd ~/repos
-    gh repo create $GOOGLE_CLOUD_PROJECT/backstage --template="ohmyplatform/backstage-template" --public --clone
-    gh repo create $GOOGLE_CLOUD_PROJECT/software-templates --template="ohmyplatform/software-templates-template" --public --clone
-    ```
-
-4. Replace values for GitHub Organization and Google Project Identifier
-
-    ```bash
-    find ~/repos/ -type f -exec sed -i "s/\${{\__GITHUB_ORG__\}}/$GOOGLE_CLOUD_PROJECT/g" {} +
-    find ~/repos/ -type f -exec sed -i "s/\${{\__GOOGLE_PROJECT_ID__\}}/$GOOGLE_CLOUD_PROJECT/g" {} +
-    ```
-
-5. Push changes to GitHub.
-
-    ```bash
-    git -C ~/repos/backstage/ add .
-    git -C ~/repos/backstage/ commit -m "chore: replace values"
-    git -C ~/repos/backstage/ push
-    git -C ~/repos/software-templates/ add .
-    git -C ~/repos/software-templates/ commit -m "chore: replace values"
-    git -C ~/repos/software-templates/ push
-    ```
-
-6. Add Backstage application to ArgoCD Apps
+7. Add Backstage application to ArgoCD Apps
 
     ```bash
     cd ~/repos/argocd-apps
@@ -339,35 +367,26 @@
     EOF
     ```
 
-7. Commit and push changes to GitHub
+8. Commit and push changes to GitHub
 
     ```bash
-    git add .
-    git commit -m "feat: add backstage application"
-    git push
+    git -C ~/repos/argocd-apps/ add .
+    git -C ~/repos/argocd-apps/ commit -m "feat: add backstage application"
+    git -C ~/repos/argocd-apps/ push
     ```
 
-8. Go to ArgoCD to check if Backstage application has been deployed successfully.
+9. Go to ArgoCD to check if Backstage application has been deployed successfully.
 
-9. Go to your Backstage URL and check everything is working as expected 🚀.
+10. Go to your Backstage URL and check everything is working as expected 🚀.
 
 ## Task 4. Create an application with Backstage
 
-TBD
+1. Go to Software Templates.
 
-## Task 5. (Optional). Create ArgoCD Commit Status GitHub App.
+    ```bash
+    echo https://backstage.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com/create
+    ```
 
-1. Go to `https://github.com/organizations/<your_org_name>/settings/apps/new`.
-2. Use the following values and click on `Create GitHub App`:
-   - GitHub App name: `ArgoCD Commit Status - <your_org_name>`
-   - Homepage URL: `https://argocd.<your_org_name>.ohmyplatform.com`
-   - Permissions:
-     - Repository:
-       - **Metadata**: `Read-only`
-       - **Commit statuses**: `Read and write`
+2. Choose `.NET API` template.
 
-3. Generate a private key
-4. Copy GitHub App crendentials
-   - App ID
-   - Client ID
-   - Private key
+3. Fill the name and the repository name with the value `demo-gcp` (or any other name you want but remember to use the same name in both places).
