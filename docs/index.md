@@ -21,57 +21,60 @@
 
 ## Prerequisites (GitHub)
 
-!!! info
-    We recommend to create a new GitHub organization for the workshop to avoid conflicts with your personal account or other organizations you may have.
+1. Create a new GitHub organization with the same name of the $GOOGLE_CLOUD_PROJECT variable to avoid conflicts with your personal account or other organizations you may have.
 
-    1. [Create GitHub Organization](https://github.com/account/organizations/new?plan=free){ .md-button .md-button--primary }
+  <p style="text-align: center;" markdown="1">
+  [Create GitHub Organization](https://github.com/account/organizations/new?plan=free){ .md-button .md-button--primary }
+  </p>
 
-    2. Go to GitHub Organization settings -> Actions (`https://github.com/organizations/<your_org_name/settings/actions`) -> Workflow permissions -> Choose `Read and write permissions` and click on `Save`.
+  ??? example "Example - Create GitHub Organization"
+      ![create_github_org](./img/create_github_org.png)
 
-1. Login to GitHub.
+2. Login to GitHub.
 
     ```bash
     gh auth login -s admin:org
     ```
 
-2. Replace <your_gh_org> with your GitHub organization name and set environment variables:
+  ??? example "Example - GitHub Login"
+      ![gh_auth_login](./img/gh_auth_login.png)
+
+3. Replace <your_gh_org> with your GitHub organization name and set environment variables:
 
     ```bash
     export GH_ORG=$GOOGLE_CLOUD_PROJECT
     ```
 
-3. Configure git to use your GitHub username and email.
+4. Configure git to use your GitHub username and email.
 
     ```bash
     git config --global user.email "ada@example.com"
     git config --global user.name "Ada Lovelace"
     ```
 
-4. Create team named `platform` GitHub.
+5. Create team named `platform` GitHub.
 
     ```bash
-    gh api -X POST /orgs/$GH_ORG/teams -f name="platform" -f description="Platform team" -f privacy="closed"
+    gh api -X POST /orgs/$GOOGLE_CLOUD_PROJECT/teams -f name="platform" -f description="Platform team" -f privacy="closed"
     ```
 
-5. Create and clone main repositories.
+6. Create and clone main repositories.
 
     ```bash
     mkdir ~/repos
     cd ~/repos
-    gh repo create $GH_ORG/infra-as-code-gc --template="ohmyplatform/infra-as-code-gc-template" --private --clone
-    gh repo create $GH_ORG/argocd-apps --template="ohmyplatform/argocd-apps-template" --private --clone
-    gh repo create $GH_ORG/backstage --template="ohmyplatform/backstage-template" --public --clone
-    gh repo create $GH_ORG/software-templates --template="ohmyplatform/software-templates-template" --private --clone
+    gh repo create $GOOGLE_CLOUD_PROJECT/infra-as-code-gc --template="ohmyplatform/infra-as-code-gc-template" --private --clone
+    gh repo create $GOOGLE_CLOUD_PROJECT/argocd-apps --template="ohmyplatform/argocd-apps-template" --private --clone
     ```
 
-6. Replace values for GitHub Organization and Google Project Identifier
+7. Replace values for GitHub Organization and Google Project Identifier
 
     ```bash
-    find ./ -type f -exec sed -i "s/\${{\__GITHUB_ORG__\}}/$GH_ORG/g" {} +
+    find ./ -type f -exec sed -i "s/\${{\__GITHUB_ORG__\}}/$GOOGLE_CLOUD_PROJECT/g" {} +
     find ./ -type f -exec sed -i "s/\${{\__GOOGLE_PROJECT_ID__\}}/$GOOGLE_CLOUD_PROJECT/g" {} +
     ```
 
-7. Push changes to GitHub.
+8. Push changes to GitHub.
 
     ```bash
     git -C ~/repos/infra-as-code-gc/ add .
@@ -80,15 +83,7 @@
     git -C ~/repos/argocd-apps/ add .
     git -C ~/repos/argocd-apps/ commit -m "chore: replace values"
     git -C ~/repos/argocd-apps/ push
-    git -C ~/repos/backstage/ add .
-    git -C ~/repos/backstage/ commit -m "chore: replace values"
-    git -C ~/repos/backstage/ push
-    git -C ~/repos/software-templates/ add .
-    git -C ~/repos/software-templates/ commit -m "chore: replace values"
-    git -C ~/repos/software-templates/ push
     ```
-
-8. It's necessary to enable public images in the GitHub Organization. To do so, go to GitHub Organization settings -> Packages -> Package creation -> Enable Public.
 
 9. Click over button `Open Editor` and open folder `repos`.
 
@@ -150,6 +145,10 @@
       ```
 
 3. Generate Client secret.
+
+  ??? example "Example - ArgoCD OAuth App"
+
+      ![argocd_oauth_app](./img/argocd_oauth_app.png)
 
 4. Create `terraform_secrets.tfvars` file in `infra-as-code-gc/argocd`.
 
@@ -279,7 +278,33 @@
     terraform -chdir=./backstage apply backstage.plan
     ```
 
-3. Add Backstage application to ArgoCD Apps
+3. Create and clone Backstage and software-templates repositories.
+
+    ```bash
+    cd ~/repos
+    gh repo create $GOOGLE_CLOUD_PROJECT/backstage --template="ohmyplatform/backstage-template" --public --clone
+    gh repo create $GOOGLE_CLOUD_PROJECT/software-templates --template="ohmyplatform/software-templates-template" --public --clone
+    ```
+
+4. Replace values for GitHub Organization and Google Project Identifier
+
+    ```bash
+    find ~/repos/ -type f -exec sed -i "s/\${{\__GITHUB_ORG__\}}/$GOOGLE_CLOUD_PROJECT/g" {} +
+    find ~/repos/ -type f -exec sed -i "s/\${{\__GOOGLE_PROJECT_ID__\}}/$GOOGLE_CLOUD_PROJECT/g" {} +
+    ```
+
+5. Push changes to GitHub.
+
+    ```bash
+    git -C ~/repos/backstage/ add .
+    git -C ~/repos/backstage/ commit -m "chore: replace values"
+    git -C ~/repos/backstage/ push
+    git -C ~/repos/software-templates/ add .
+    git -C ~/repos/software-templates/ commit -m "chore: replace values"
+    git -C ~/repos/software-templates/ push
+    ```
+
+6. Add Backstage application to ArgoCD Apps
 
     ```bash
     cd ~/repos/argocd-apps
@@ -314,7 +339,7 @@
     EOF
     ```
 
-4. Commit and push changes to GitHub
+7. Commit and push changes to GitHub
 
     ```bash
     git add .
@@ -322,9 +347,9 @@
     git push
     ```
 
-5. Go to ArgoCD to check if Backstage application has been deployed successfully.
+8. Go to ArgoCD to check if Backstage application has been deployed successfully.
 
-6. Go to your Backstage URL and check everything is working as expected 🚀.
+9. Go to your Backstage URL and check everything is working as expected 🚀.
 
 ## Task 4. Create an application with Backstage
 

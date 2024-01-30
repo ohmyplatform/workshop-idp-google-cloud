@@ -1,1 +1,5 @@
 site_name: workshop-idp-google-cloud
+edit_uri: edit/main/docs/
+repo_url: https://github.com/ohmyplatform/workshop-idp-google-cloud
+plugins:
+  - techdocs-core
