@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: workshop-idp-google-cloud
+  description: Workshop about creating an Internal Developer Platform on Google Cloud using Backstage and ArgoCD
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: library
+  owner: group:default/platform
+  lifecycle: production
