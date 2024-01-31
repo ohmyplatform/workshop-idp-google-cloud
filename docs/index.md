@@ -189,11 +189,17 @@
     terraform -chdir=./argocd apply argocd.plan
     ```
 
-4. Go to ArgoCD login URL, that will be `https://argocd.<your_org_name>.ohmyplatform.com` where a login screen like the following should be displayed.
+4. Go to ArgoCD login URL with the following command:
+
+    ```bash
+    echo "https://$(kubectl get ingress -n argocd argocd-server -o json | jq -r '.spec.rules[].host')"
+    ```
+
+5. A login screen like the following should be displayed.
 
     ![argocd_login_screen](./img/argocd_login_screen.png)
 
-5. Click in buttom **LOG IN VIA GITHUB** to access ArgoCD using GitHub team `platform` created previously
+6. Click in buttom **LOG IN VIA GITHUB** to access ArgoCD using GitHub team `platform` created previously
 
 ## Task 3. Deploy Backstage
 
@@ -379,6 +385,10 @@
     ```
 
 9. Go to ArgoCD to check if Backstage application has been deployed successfully.
+
+    ```bash
+    echo "https://$(kubectl get ingress -n backstage backstage -o json | jq -r '.spec.rules[].host')"
+    ```
 
 10. Go to your Backstage URL and check everything is working as expected 🚀.
 
