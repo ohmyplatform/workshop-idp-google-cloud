@@ -33,13 +33,13 @@
 2. Enable Public packages in GitHub organization.
 
     ```bash
-    echo https://github.com/organizations/$GOOGLE_CLOUD_PROJECT/settings/packages
+    echo "https://github.com/organizations/$GOOGLE_CLOUD_PROJECT/settings/packages"
     ```
 
   ??? example "Example - Enable Public Packages"
       ![packages_permissions_public](./img/packages_permissions_public.png)
 
-2. Login to GitHub.
+3. Login to GitHub.
 
     ```bash
     gh auth login -s admin:org
@@ -48,20 +48,20 @@
   ??? example "Example - GitHub Login"
       ![gh_auth_login](./img/gh_auth_login.png)
 
-3. Configure git to use your GitHub username and email.
+4. Configure git to use your GitHub username and email.
 
     ```bash
     git config --global user.email "ada@example.com"
     git config --global user.name "Ada Lovelace"
     ```
 
-4. Create team named `platform` GitHub.
+5. Create team named `platform` GitHub.
 
     ```bash
     gh api -X POST /orgs/$GOOGLE_CLOUD_PROJECT/teams -f name="platform" -f description="Platform team" -f privacy="closed"
     ```
 
-5. Create and clone main repositories.
+6. Create and clone main repositories.
 
     ```bash
     mkdir ~/repos
@@ -70,14 +70,14 @@
     gh repo create $GOOGLE_CLOUD_PROJECT/argocd-apps --template="ohmyplatform/argocd-apps-template" --private --clone
     ```
 
-6. Replace values for GitHub Organization and Google Project Identifier
+7. Replace values for GitHub Organization and Google Project Identifier
 
     ```bash
     find ./ -type f -exec sed -i "s/\${{\__GITHUB_ORG__\}}/$GOOGLE_CLOUD_PROJECT/g" {} +
     find ./ -type f -exec sed -i "s/\${{\__GOOGLE_PROJECT_ID__\}}/$GOOGLE_CLOUD_PROJECT/g" {} +
     ```
 
-7. Push changes to GitHub.
+8. Push changes to GitHub.
 
     ```bash
     git -C ~/repos/infra-as-code-gc/ add .
@@ -88,7 +88,7 @@
     git -C ~/repos/argocd-apps/ push
     ```
 
-8. Click over button `Open Editor` and open folder `repos`.
+9. Click over button `Open Editor` and open folder `repos`.
 
 ## Task 1. Create GKE infrastructure
 
@@ -137,7 +137,7 @@
 1. ArgoCD allows you to use local users or SSO (Single Sign-On). In this workshop we will use GitHub as the OIDC provider. To do so, we need to register an OAuth application in GitHub. You can copy the result link to configure it:
 
     ```bash
-    echo https://github.com/organizations/$GOOGLE_CLOUD_PROJECT/settings/applications/new
+    echo "https://github.com/organizations/$GOOGLE_CLOUD_PROJECT/settings/applications/new"
     ```
 
 2. Use the following values:
@@ -150,13 +150,13 @@
    - Homepage URL:
 
       ```bash
-      echo https://argocd.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com
+      echo "https://argocd.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com"
       ```
 
    - Authorization callback URL:
 
       ```bash
-      echo https://argocd.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com/api/dex/callback
+      echo "https://argocd.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com/api/dex/callback"
       ```
 
 3. Generate Client secret.
@@ -202,7 +202,7 @@
 1. In the same way than ArgoCD, we need to register an OAuth application in GitHub for Backstage. You can copy the result link to configure it:
 
     ```bash
-    echo https://github.com/organizations/$GOOGLE_CLOUD_PROJECT/settings/applications/new
+    echo "https://github.com/organizations/$GOOGLE_CLOUD_PROJECT/settings/applications/new"
     ```
 
 2. It will be used the following values for the configuration:
@@ -216,13 +216,13 @@
    - Homepage URL:
 
       ```bash
-      echo https://backstage.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com
+      echo "https://backstage.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com"
       ```
 
    - Authorization callback URL:
 
       ```bash
-      echo https://backstage.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com/api/auth/github/handler/frame
+      echo "https://backstage.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com/api/auth/github/handler/frame"
       ```
 
 3. Generate Client secret.
@@ -233,10 +233,13 @@
 1. Follow the result link to start configuring it:
 
     ```bash
-    echo https://github.com/organizations/$GOOGLE_CLOUD_PROJECT/settings/apps/new
+    echo "https://github.com/organizations/$GOOGLE_CLOUD_PROJECT/settings/apps/new"
     ```
 
 2. Use the following values and click on `Create GitHub App`:
+
+  !!! warning
+      The GitHub App Name shouldn't be no longer than 34 characters, that is the reason why in the commands used below the name is generated from `$GOOGLE_CLOUD_PROJECT` using `cut` command.
 
    - GitHub App name:
 
@@ -247,9 +250,9 @@
    - Homepage URL:
 
       ```bash
-      echo https://backstage.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com
+      echo "https://backstage.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com"
       ```
-    
+
    - Click on `Active` checkbox in `Webhook` section to disable it.
 
    - Permissions:
@@ -384,9 +387,83 @@
 1. Go to Software Templates.
 
     ```bash
-    echo https://backstage.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com/create
+    echo "https://backstage.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com/create"
     ```
 
-2. Choose `.NET API` template.
+2. There should be one template called `.NET API` like in the following image.
 
-3. Fill the name and the repository name with the value `demo-gcp` (or any other name you want but remember to use the same name in both places).
+    ![backstage_view_software_templates](./img/backstage_view_software_templates.jpeg)
+
+3. Choose `.NET API` template.
+
+4. Fill the required values **with the same name** like in screenshots showed below.
+
+    ![create_api_software_template_step_1](./img/create_api_software_template_step_1.jpeg)
+    *Filling name of component*
+
+    ![create_api_software_template_step_2](./img/create_api_software_template_step_2.jpeg)
+    *Filling repository name*
+
+5. Finally, a summary of the data entered will be displayed. Once it has been verified that the data entered is correct, click on the `CREATE` button.
+
+    ![create_api_software_template_step_3](./img/create_api_software_template_step_3.jpeg)
+    *Summary data introduced for component to create*
+
+6. The template execution will be launched, where the following will be performed:
+
+   1. Creation of the repository
+   2. Register the application in the Backstage catalog
+   3. Pull Request creation in the `argocd-apps` repository with the necessary values to create the ArgoCD Application and the Kubernetes manifests for it
+
+7. After the execution is performed it will be showed a Summary
+
+    ![create_api_software_template_execution_summary](./img/create_api_software_template_execution_summary.jpeg)
+    *.NET API software template summary of execution*
+
+8. The buttons shown in the summary exposed in the previous image will allow to access the different actions performed by the execution of the software template
+
+   1. By clicking on the `REPOSITORY` button the created repository can be accessed
+
+      ![repository_created_overview](./img/repository_created_overview.jpeg)
+      *Repository created*
+
+   2. By clicking on the `OPEN IN THE CATALOG` button the created component in the catalog can be accesed
+
+      ![app_registered_in_catalog_overview](./img/app_registered_in_catalog_overview.jpeg)
+      *Component registered in catalog overview*
+  
+   3. By clicking on the `ARGOCD APPS PR` the created Pull Request in repository `argocd-apps` can be accesed.
+
+      ![argocd_apps_pr_overview](./img/argocd_apps_pr_overview.jpeg)
+      *argocd-apps Pull Request created*
+
+      It's necessary to click on button `Squash and Merge` for Merge the Pull Request.
+
+9. The argocd-apps application in ArgoCD should be accessed through the specific URL:
+
+    ```bash
+    echo "https://argocd.$GOOGLE_CLOUD_PROJECT.ohmyplatform.com/applications/argocd/argocd-apps?view=tree&resource="
+    ```
+
+10. Accesing the URL obtained from the previous step it will be seen that the only Application is `backstage`.
+
+    ![argocd_apps_initial_state](./img/argocd_apps_initial_state.jpeg)
+
+11. Clicking in button `REFRESH` it should appear a new `Application` called with the name filled in the `.NET API` template in the initial steps
+
+    ![argocd_apps_refresh_apps](./img/argocd_apps_refresh_apps.jpeg)
+
+12. Clicking on the button to access directly to the application, indicated in the previous image by a red square, will take you to the application details, where you should see something like the one shown below.
+
+    ![argocd_app_created_initial_state](./img/argocd_app_created_initial_state.jpeg)
+
+    !!! info
+        In an initial state an error will be displayed, because the certificate is being requested with cert-manager and is not ready yet.
+
+13. After a few minutes the cerficate will be ready and should appear all the elements with successfully creation status like in the following image.
+
+    ![argocd_app_created_final_state](./img/argocd_app_created_final_state.jpeg)
+
+14. By clicking on the Ingress shortcut, using the icon marked with a red square in the image above, you will be able to access the application created, it will be necessary to add `/swagger/index.html` to the URL where you will be redirected.
+
+  ![argocd_app_created_overview](./img/argocd_app_created_overview.jpeg)
