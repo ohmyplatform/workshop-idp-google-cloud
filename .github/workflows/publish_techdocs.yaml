@@ -17,7 +17,9 @@ on:
 jobs:
   publish_techdocs:
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.confirm == 'yes'
-    uses: ohmyplatform/actions/.github/workflows/publish_techdocs.yml@v1
+    uses: ohmyplatform/actions/.github/workflows/publish_techdocs.yml@support-gh-pages
+    with:
+      publish_gh_pages: true
     secrets:
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
